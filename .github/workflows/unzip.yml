@@ -1,40 +1,41 @@
-name: Auto Unzip and Push
+name: Auto Unzip to Root and Push
 
-# Workflow ini akan berjalan setiap kali kamu push file zip ke branch 'main'
 on:
   push:
     branches:
       - main
     paths:
-      - '**.zip' # Hanya berjalan jika ada perubahan pada file .zip
+      - '**.zip'
 
 jobs:
   unzip-and-push:
     runs-on: ubuntu-latest
 
     steps:
-    # 1. Checkout isi repositori kamu ke server virtual
+    # 1. Ambil isi repositori terbaru
     - name: Checkout repository
       uses: actions/checkout@v4
 
-    # 2. Proses ekstrak file ZIP
-    # Ganti 'file-kamu.zip' dengan nama file zip milikmu, atau gunakan wildcard seperti *.zip
-    - name: Unzip file
+    # 2. Ekstrak langsung ke folder root (.) dan hapus file zip asli jika tidak diperlukan lagi
+    # Opsi -o artinya overwrite (timpa file lama jika namanya sama)
+    # Opsi -d . artinya ekstrak langsung di direktori saat ini (root)
+    - name: Unzip file to root
       run: |
-        unzip -o *.zip -d ./hasil-ekstrak
+        unzip -o *.zip -d .
         
-    # 3. Commit dan Push kembali hasil ekstrak ke GitHub
+    # 3. Commit dan Push semua file hasil ekstrak ke GitHub
     - name: Commit and Push changes
       run: |
         git config --global user.name "github-actions[bot]"
         git config --global user.email "github-actions[bot]@users.noreply.github.com"
         
-        git add ./hasil-ekstrak
+        # Mengadd semua file yang ada di root
+        git add .
         
-        # Cek apakah ada perubahan baru sebelum commit supaya tidak error
+        # Cek apakah ada file baru sebelum commit
         if [ -n "$(git status --porcelain)" ]; then
-          git commit -m "Automated unzip: $(date +'%Y-%m-%d %H:%M:%S')"
+          git commit -m "Automated unzip to root: $(date +'%Y-%m-%d %H:%M:%S')"
           git push
         else
-          echo "Tidak ada perubahan yang perlu di-commit."
+          echo "Tidak ada perubahan atau file baru yang ditemukan."
         fi
