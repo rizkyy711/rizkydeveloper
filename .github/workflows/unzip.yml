@@ -1,0 +1,55 @@
+name: Auto Unzip File
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  unzip-process:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      # 1. Ambil file dari repo kamu
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      # 2. Proses Ekstrak Mandiri (Anti Error)
+      - name: Ekstrak File Zip
+        run: |
+          echo "=== Mengecek File ==="
+          ls -la
+          
+          # Cek apakah file .zip ada
+          if ls *.zip 1> /dev/null 2>&1; then
+            for file in *.zip; do
+              echo "Menemukan file zip: $file. Sedang mengekstrak..."
+              unzip -o "$file" -d .
+              rm "$file"
+            done
+          else
+            echo "Aman: Belum ada file .zip yang terdeteksi di root folder saat ini."
+          fi
+
+      # 3. Simpan Kembali ke GitHub dengan Aman
+      - name: Commit dan Push Hasil
+        run: |
+          git config --global user.name "github-actions[bot]"
+          git config --global user.email "github-actions[bot]@users.noreply.github.com"
+          
+          # Ambil update terbaru dulu biar tidak bentrok saat upload web
+          git pull origin main --rebase || echo "Tidak ada bentrok data"
+          
+          git add -A
+          
+          if ! git diff-index --quiet HEAD; then
+            echo "Ada file hasil ekstrak baru. Melakukan commit..."
+            git commit -m "Auto-unzip sukses [skip ci]"
+            git push origin main
+          else
+            echo "Aman. Tidak ada perubahan file baru yang perlu disimpan."
+          fi
