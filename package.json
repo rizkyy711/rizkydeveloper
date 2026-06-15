@@ -1,6 +1,6 @@
 {
     "name": "Rizky Assistant",
-    "version": "1.8.27",
+    "version": "2.0",
     "description": "WhatsApp API Modification By Rizky",
     "publishConfig": {
         "access": "public"
