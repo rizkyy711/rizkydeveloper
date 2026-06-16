@@ -1,0 +1,41 @@
+name: Auto Unzip to Root and Push
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '**.zip'
+
+jobs:
+  unzip-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+    # 1. Ambil isi repositori terbaru
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # 2. Ekstrak langsung ke folder root (.) dan hapus file zip asli jika tidak diperlukan lagi
+    # Opsi -o artinya overwrite (timpa file lama jika namanya sama)
+    # Opsi -d . artinya ekstrak langsung di direktori saat ini (root)
+    - name: Unzip file to root
+      run: |
+        unzip -o *.zip -d .
+        
+    # 3. Commit dan Push semua file hasil ekstrak ke GitHub
+    - name: Commit and Push changes
+      run: |
+        git config --global user.name "github-actions[bot]"
+        git config --global user.email "github-actions[bot]@users.noreply.github.com"
+        
+        # Mengadd semua file yang ada di root
+        git add .
+        
+        # Cek apakah ada file baru sebelum commit
+        if [ -n "$(git status --porcelain)" ]; then
+          git commit -m "Automated unzip to root: $(date +'%Y-%m-%d %H:%M:%S')"
+          git push
+        else
+          echo "Tidak ada perubahan atau file baru yang ditemukan."
+        fi
